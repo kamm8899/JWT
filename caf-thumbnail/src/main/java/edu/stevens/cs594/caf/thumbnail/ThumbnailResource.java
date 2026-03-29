@@ -1,5 +1,6 @@
 package edu.stevens.cs594.caf.thumbnail;
 
+import jakarta.annotation.security.RolesAllowed;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -13,7 +14,7 @@ import org.jboss.logging.Logger;
 @RequestScoped
 @Path("/api/thumbnail")
 // TODO require user role
-
+@RolesAllowed("user")
 public class ThumbnailResource {
 
     @Inject
@@ -35,7 +36,8 @@ public class ThumbnailResource {
         // TODO log the following claims from the bearer token:
         // - principal
         // - roles of the principal
-
+        logger.infof("Principal: %s", caller.getPrincipal().getName());
+        logger.infof("Roles: %s", caller.getRoles());
 
         return thumbnailService.createThumbnail(bucketName, objectKey, Integer.parseInt(width), Integer.parseInt(height));
     }

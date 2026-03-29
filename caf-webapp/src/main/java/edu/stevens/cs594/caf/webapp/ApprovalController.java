@@ -4,6 +4,7 @@ import edu.stevens.cs594.caf.service.IImageService;
 import edu.stevens.cs594.caf.service.dto.ImageDto;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -27,6 +28,7 @@ import java.util.UUID;
 @Transactional
 @Path("/web/approval")
 // TODO
+@RolesAllowed("approver")
 public class ApprovalController {
 
     public static final String IMAGE_BUCKET_CONFIG_KEY = "caf.image.bucket";

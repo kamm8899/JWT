@@ -9,6 +9,7 @@ import edu.stevens.cs594.caf.service.dto.ImageDtoFactory;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
 import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -34,8 +35,8 @@ import java.util.UUID;
 @RequestScoped
 @Transactional
 @Path("/web/images")
-// TODO
-
+// TODO restrict operations to role of user
+@RolesAllowed("user")
 public class ImagesController {
 
     public static final String IMAGE_BUCKET_CONFIG_KEY = "caf.image.bucket";
@@ -179,7 +180,17 @@ public class ImagesController {
         logger.info(String.format("Deleting image %s: ", imageId));
         ImageDto imageDto = imageService.getImage(UUID.fromString(imageId));
         // TODO delete the image, but instead return 403 if remover is not owner of image
-        return null;
+        String username = identity.getPrincipal().getName();
+        if (!imageDto.getLoader().equals(username)) {
+            throw new WebApplicationException(403);
+        }
+        DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                .bucket(imageBucketName)
+                .key(imageObjectName(imageDto.getId()))
+                .build();
+        storageClient.deleteObject(deleteRequest);
+        imageService.removeImage(imageDto.getId());
+        return Templates.images(null, imageService.getImages());
         // End TODO
     }
 
@@ -195,7 +206,11 @@ public class ImagesController {
         // TODO delete the comment, but instead return 403 if remover is not owner of image or comment is not for the image
         // Note that commenter themselves does not have permission to delete their own comment!
         // Display image with its comments when done.
-
+        String username = identity.getPrincipal().getName();
+        if (!imageDto.getLoader().equals(username) || !id.equals(commentDto.getImageId())) {
+            throw new WebApplicationException(403);
+        }
+        imageService.removeComment(cid);
         // End TODO
         return Templates.image(getImageContent(id), imageService.getImage(id));
     }
